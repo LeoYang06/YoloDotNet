@@ -9,8 +9,13 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\test\YoloDotNet.Test.Common\YoloDotNet.Test.Common.csproj" />
-    <ProjectReference Include="..\..\YoloDotNet.ExecutionProvider.Cuda\YoloDotNet.ExecutionProvider.Cuda.csproj" />
+    <ProjectReference Include="..\..\YoloDotNet.ExecutionProvider.Cpu\YoloDotNet.ExecutionProvider.Cpu.csproj" />
+    <ProjectReference Include="..\..\YoloDotNet.ExecutionProvider.DirectML\YoloDotNet.ExecutionProvider.DirectML.csproj" />
     <ProjectReference Include="..\..\YoloDotNet\YoloDotNet.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.ML.OnnxRuntime.DirectML" Version="1.24.3" />
   </ItemGroup>
 
 	<!--<Target Name="CopyGpuNativeDlls" AfterTargets="Build">

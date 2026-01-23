@@ -7,9 +7,11 @@ using System.Diagnostics;
 using System.Globalization;
 using YoloDotNet;
 using YoloDotNet.Enums;
-using YoloDotNet.ExecutionProvider.Cuda;
+using YoloDotNet.ExecutionProvider.Cpu;
+using YoloDotNet.ExecutionProvider.DirectML;
 using YoloDotNet.Extensions;
 using YoloDotNet.Models;
+using YoloDotNet.Modules.DFINE;
 using YoloDotNet.Test.Common;
 using YoloDotNet.Test.Common.Enums;
 
@@ -50,6 +52,8 @@ namespace ObjectDetectionDemo
             CreateOutputFolder();
             SetDrawingOptions();
 
+            var labelModels = LabelModelParser.LoadLabelsFromConfig(@"E:\OpenSource\Github\YoloDotNet_Self\test\assets\Configs\config.json");
+
             // Initialize YoloDotNet.
             // YoloOptions configures the model, hardware settings, and image processing behavior.
             using var yolo = new Yolo(new YoloOptions
@@ -80,19 +84,22 @@ namespace ObjectDetectionDemo
                 //   More information about execution providers and setup instructions can be found in the README:
                 //   https://github.com/NickSwardh/YoloDotNet
 
-                ExecutionProvider = new CudaExecutionProvider(
+                // ExecutionProvider = new CudaExecutionProvider(
+                //
+                //     // Path or byte[] to the ONNX model file.
+                //     model: SharedConfig.GetTestModelV26(ModelType.ObjectDetection),
+                //
+                //     // GPU device Id to use for inference. -1 = CPU, 0+ = GPU device Id.
+                //     gpuId: 0
+                //
+                //     // Optional configuration for TensorRT execution.
+                //     // Executes inference using NVIDIA TensorRT for highly optimized GPU acceleration.
+                //     // Supports FP32 and FP16 precision modes, and optionally INT8 if calibration data is provided.
+                //     // trtConfig: new TensorRt {  ... }
+                //     ),
 
-                    // Path or byte[] to the ONNX model file.
-                    model: SharedConfig.GetTestModelV26(ModelType.ObjectDetection),
-
-                    // GPU device Id to use for inference. -1 = CPU, 0+ = GPU device Id.
-                    gpuId: 0
-
-                    // Optional configuration for TensorRT execution.
-                    // Executes inference using NVIDIA TensorRT for highly optimized GPU acceleration.
-                    // Supports FP32 and FP16 precision modes, and optionally INT8 if calibration data is provided.
-                    // trtConfig: new TensorRt {  ... }
-                    ),
+                // ExecutionProvider = new DirectMLExecutionProvider(SharedConfig.GetTestModelDFINE(ModelType.ObjectDetection), 1),
+                ExecutionProvider = new CpuExecutionProvider(SharedConfig.GetTestModelDFINE(ModelType.ObjectDetection)),
 
                 // Resize mode applied before inference. Proportional maintains the aspect ratio (adds padding if needed),
                 // while Stretch resizes the image to fit the target size without preserving the aspect ratio.
@@ -112,7 +119,7 @@ namespace ObjectDetectionDemo
             using var image = SKBitmap.Decode(SharedConfig.GetTestImage(ImageType.ObjectDetection));
 
             // Run object detection inference
-            var results = yolo.RunObjectDetection(image, confidence: 0.15, iou: 0.7);
+            var results = yolo.RunObjectDetection(image, confidence: 0.54, iou: 0.7);
 
             // Draw results with optional drawing options
             image.Draw(results, _drawingOptions);
@@ -203,10 +210,7 @@ namespace ObjectDetectionDemo
 
         private static void DisplayOutputFolder()
         {
-            var shell = OperatingSystem.IsWindows() ? "explorer"
-                     : OperatingSystem.IsLinux() ? "xdg-open"
-                     : OperatingSystem.IsMacOS() ? "open"
-                     : null;
+            var shell = OperatingSystem.IsWindows() ? "explorer" : OperatingSystem.IsLinux() ? "xdg-open" : OperatingSystem.IsMacOS() ? "open" : null;
 
             if (shell is not null)
                 Process.Start(shell, _outputFolder);

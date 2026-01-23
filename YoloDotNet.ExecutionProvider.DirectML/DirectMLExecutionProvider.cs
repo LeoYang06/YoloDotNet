@@ -10,6 +10,7 @@ namespace YoloDotNet.ExecutionProvider.DirectML
         public object Session => _session;
 
         #region Private Fields
+
         private InferenceSession _session = default!;
         private RunOptions _runOptions = default!;
 
@@ -24,16 +25,21 @@ namespace YoloDotNet.ExecutionProvider.DirectML
         private TensorElementType _elementDataType = default!;
 
         private IDisposableReadOnlyCollection<OrtValue>? _currentResult;
+
         #endregion
 
+        public OnnxMetadataOverride? OnnxMetadataOverride { get; set; }
+
         #region Constructors
+
         /// <summary>
         /// Constructs a DirectMLExecutionProvider for running ONNX models using DirectML GPU acceleration.
         /// </summary>
         /// <param name="model">Path to the ONNX model file.</param>
         /// <param name="gpuId">GPU device ID (0 = default GPU, -1 = CPU fallback).</param>
-        public DirectMLExecutionProvider(string model, int gpuId = 0)
+        public DirectMLExecutionProvider(string model, int gpuId = 0, OnnxMetadataOverride? metadataOverride = null)
         {
+            OnnxMetadataOverride = metadataOverride;
             InitializeYolo(model, gpuId);
         }
 
@@ -42,13 +48,16 @@ namespace YoloDotNet.ExecutionProvider.DirectML
         /// </summary>
         /// <param name="model">ONNX model as byte array.</param>
         /// <param name="gpuId">GPU device ID (0 = default GPU, -1 = CPU fallback).</param>
-        public DirectMLExecutionProvider(byte[] model, int gpuId = 0)
+        public DirectMLExecutionProvider(byte[] model, int gpuId = 0, OnnxMetadataOverride? metadataOverride = null)
         {
+            OnnxMetadataOverride = metadataOverride;
             InitializeYolo(model, gpuId);
         }
+
         #endregion
 
         #region Initialization
+
         private void InitializeYolo(object model, int gpuId)
         {
             ConfigureOrtEnv();
@@ -56,7 +65,7 @@ namespace YoloDotNet.ExecutionProvider.DirectML
             var options = new SessionOptions
             {
                 GraphOptimizationLevel = GraphOptimizationLevel.ORT_ENABLE_ALL,
-                
+
                 // DirectML requires sequential execution mode (parallel execution is not supported)
                 ExecutionMode = ExecutionMode.ORT_SEQUENTIAL,
 
@@ -74,9 +83,7 @@ namespace YoloDotNet.ExecutionProvider.DirectML
             }
 
             // Create session using bytes if available; else load from file with selected provider.
-            _session = (model is byte[] modelBytes)
-                ? new InferenceSession(modelBytes, options)
-                : new InferenceSession((string)model, options);
+            _session = (model is byte[] modelBytes) ? new InferenceSession(modelBytes, options) : new InferenceSession((string)model, options);
 
             GetOnnxMetaData();
             AllocateOutputBuffers();
@@ -108,9 +115,11 @@ namespace YoloDotNet.ExecutionProvider.DirectML
                 _dataTypeSize = sizeof(ushort);
             }
         }
+
         #endregion
 
         #region Run Inference
+
         /// <summary>
         /// Run inference on the provided normalized pixel data.
         /// </summary>
@@ -124,23 +133,15 @@ namespace YoloDotNet.ExecutionProvider.DirectML
             {
                 var elementType = (typeof(T) == typeof(float)) ? TensorElementType.Float : TensorElementType.Float16;
 
-                using var inputOrtValue = OrtValue.CreateTensorValueWithData(
-                    OrtMemoryInfo.DefaultInstance,
-                    elementType,   // 👈 force ONNX to interpret buffer as Float16
-                    _inputShape,
-                    (IntPtr)pData,
-                    _inputShapeSize * sizeof(T) // size in bytes (ushort is 2 bytes, float is 4 bytes)
+                using var inputOrtValue = OrtValue.CreateTensorValueWithData(OrtMemoryInfo.DefaultInstance, elementType, // 👈 force ONNX to interpret buffer as Float16
+                _inputShape, (IntPtr)pData, _inputShapeSize * sizeof(T) // size in bytes (ushort is 2 bytes, float is 4 bytes)
                 );
 
                 // Dispose previous result before running new inference to prevent memory leaks
                 _currentResult?.Dispose();
 
                 // Run inference
-                _currentResult = _session.Run(
-                    _runOptions,
-                    _inputNames,
-                    [inputOrtValue],
-                    _outputNames);
+                _currentResult = _session.Run(_runOptions, _inputNames, [inputOrtValue], _outputNames);
 
                 if (elementType == TensorElementType.Float)
                 {
@@ -169,6 +170,7 @@ namespace YoloDotNet.ExecutionProvider.DirectML
                 }
             }
         }
+
         #endregion
 
         #region Helper methods
@@ -251,13 +253,14 @@ namespace YoloDotNet.ExecutionProvider.DirectML
         /// Extracts metadata and input/output shapes from the ONNX model.
         /// </summary>
         private void GetOnnxMetaData()
-            => OnnxData = _session.ParseOnnx();
+        {
+            OnnxData = _session.ParseOnnx(OnnxMetadataOverride);
+        }
 
         /// <summary>
         /// Gets the tensor element type used by the model (e.g., Float32 or Float16).
         /// </summary>
-        internal TensorElementType GetModelElementType()
-            => _session.InputMetadata["images"].ElementDataType;
+        internal TensorElementType GetModelElementType() => _session.InputMetadata["images"].ElementDataType;
 
         public void Dispose()
         {
