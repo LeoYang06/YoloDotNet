@@ -7,9 +7,9 @@ namespace YoloDotNet.Test.Common
     using System;
     using System.IO;
     using System.Text.Json;
-
     using YoloDotNet.Enums;
     using YoloDotNet.Test.Common.Enums;
+
 
     public static class SharedConfig
     {
@@ -75,8 +75,8 @@ namespace YoloDotNet.Test.Common
                 return Path.Join(repoAssets, "Models");
 
             throw new InvalidOperationException($"Could not determine models folder. Provide it by calling SharedConfig.SetBaseFolder(baseFolder) or " +
-                $"SharedConfig.SetFolders(modelsFolder, imagesFolder), setting the environment variable {EnvAssetsFolder}, or adding " +
-                $"a 'yolodotnet.config.json' with a ModelsFolder property at the repository root.");
+                                                $"SharedConfig.SetFolders(modelsFolder, imagesFolder), setting the environment variable {EnvAssetsFolder}, or adding " +
+                                                $"a 'yolodotnet.config.json' with a ModelsFolder property at the repository root.");
         }
 
         private static string ResolveImagesFolder()
@@ -101,8 +101,8 @@ namespace YoloDotNet.Test.Common
                 return Path.Join(repoAssets, "Media");
 
             throw new InvalidOperationException($"Could not determine images folder. Provide it by calling SharedConfig.SetBaseFolder(baseFolder) or" +
-                $"SharedConfig.SetFolders(modelsFolder, imagesFolder), setting the environment variable {EnvAssetsFolder}, or adding " +
-                $"a 'yolodotnet.config.json' with an ImagesFolder property at the repository root.");
+                                                $"SharedConfig.SetFolders(modelsFolder, imagesFolder), setting the environment variable {EnvAssetsFolder}, or adding " +
+                                                $"a 'yolodotnet.config.json' with an ImagesFolder property at the repository root.");
         }
 
         private static string? ResolveAssetsBaseFolder()
@@ -134,11 +134,13 @@ namespace YoloDotNet.Test.Common
             return null;
         }
 
+
         private sealed class RepoConfig
         {
             public string? ModelsFolder { get; set; }
             public string? ImagesFolder { get; set; }
         }
+
 
         private static RepoConfig? TryLoadConfigFromRepoRoot()
         {
@@ -311,6 +313,19 @@ namespace YoloDotNet.Test.Common
         public static string GetTestModelRTDETR(ModelType modelType) => modelType switch
         {
             ModelType.ObjectDetection => Path.Join(ModelsFolder, "rtdetr-l.onnx"),
+            _ => throw new ArgumentException("Unknown modeltype.")
+        };
+
+        /// <summary>
+        /// Test models for Yolo D-FINE
+        /// </summary>
+        /// <param name="modelType"></param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentException"></exception>
+        public static string GetTestModelDFINE(ModelType modelType) => modelType switch
+        {
+            ModelType.ObjectDetection => Path.Join(ModelsFolder, "dfine_obj365_int8_cpu.onnx"),
+            // ModelType.ObjectDetection => Path.Join(ModelsFolder, "dfine_obj365_float32.onnx"),
             _ => throw new ArgumentException("Unknown modeltype.")
         };
 
