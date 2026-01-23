@@ -52,7 +52,7 @@ namespace ObjectDetectionDemo
             CreateOutputFolder();
             SetDrawingOptions();
 
-            var labelModels = LabelModelParser.LoadLabelsFromConfig(@"E:\OpenSource\Github\YoloDotNet_Self\test\assets\Configs\config.json");
+            // var labelModels = LabelModelParser.LoadLabelsFromConfig(@"E:\OpenSource\Github\YoloDotNet_Self\test\assets\Configs\config.json");
 
             // Initialize YoloDotNet.
             // YoloOptions configures the model, hardware settings, and image processing behavior.
@@ -119,7 +119,7 @@ namespace ObjectDetectionDemo
             using var image = SKBitmap.Decode(SharedConfig.GetTestImage(ImageType.ObjectDetection));
 
             // Run object detection inference
-            var results = yolo.RunObjectDetection(image, confidence: 0.54, iou: 0.7);
+            var results = yolo.RunObjectDetection(image, confidence: 0.57, iou: 0.7);
 
             // Draw results with optional drawing options
             image.Draw(results, _drawingOptions);

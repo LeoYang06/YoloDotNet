@@ -324,7 +324,7 @@ namespace YoloDotNet.Test.Common
         /// <exception cref="ArgumentException"></exception>
         public static string GetTestModelDFINE(ModelType modelType) => modelType switch
         {
-            ModelType.ObjectDetection => Path.Join(ModelsFolder, "dfine_obj365_int8_cpu.onnx"),
+            ModelType.ObjectDetection => Path.Join(ModelsFolder, "dfine_l_obj365_e25_sim_int8.onnx"),
             // ModelType.ObjectDetection => Path.Join(ModelsFolder, "dfine_obj365_float32.onnx"),
             _ => throw new ArgumentException("Unknown modeltype.")
         };
