@@ -4,14 +4,16 @@
 
 namespace YoloDotNet.Extensions
 {
+    using Microsoft.ML.OnnxRuntime;
+
     public static class ParseOnnxData
     {
-        public static OnnxModel ParseOnnx(this object onnxData, OnnxMetadataOverride? metadataOverride = null)
+        public static OnnxModel ParseOnnx(this InferenceSession session, OnnxMetadataOverride? metadataOverride = null)
         {
             // 1. 获取原始 Shape (包含 -1)
-            var rawInputs = GetShape<long>(onnxData, "InputMetadata");
-            var outputs = GetShape<int>(onnxData, "OutputMetadata");
-            var metadata = GetMetadata(onnxData);
+            var rawInputs = GetInputShapes(session);
+            var outputs = GetOutputShapes(session);
+            var metadata = GetMetadata(session);
 
             // 2. 处理动态输入 Shape (清洗数据)
             // 我们需要把 {-1, 3, -1, -1} 变成 {1, 3, 640, 640}
@@ -84,7 +86,7 @@ namespace YoloDotNet.Extensions
                 InputShapes = sanitizedInputs, // <--- 传入清洗后的 Shape
                 OutputShapes = outputs,
                 CustomMetaData = metadata,
-                ModelDataType = GetModelDataType(onnxData),
+                ModelDataType = GetModelDataType(session),
                 ModelType = type,
                 ModelVersion = version,
                 Labels = labels,
@@ -95,79 +97,47 @@ namespace YoloDotNet.Extensions
         #region Helper Methods
 
         /// <summary>
-        /// Retrieves the shape dimensions for each input or output from an ONNX model property and returns them as a dictionary.
+        /// Retrieves the input shape dimensions from an ONNX model session.
+        /// Dimensions are converted from int to long to support negative dynamic axes.
         /// </summary>
-        private static Dictionary<string, T[]> GetShape<T>(object onnxData, string propertyName)
+        private static Dictionary<string, long[]> GetInputShapes(InferenceSession session)
         {
-            try
+            var shapes = new Dictionary<string, long[]>();
+
+            foreach (var kvp in session.InputMetadata)
             {
-                var metadataProperty = onnxData.GetType().GetProperty(propertyName) ?? throw new YoloDotNetModelException($"{propertyName} property not found on ONNX model.");
-
-                var metadata = metadataProperty.GetValue(onnxData) ?? throw new YoloDotNetModelException($"{propertyName} value is null.");
-
-                var shapes = new Dictionary<string, T[]>();
-
-                foreach (var item in (dynamic)metadata)
-                {
-                    var tensorName = (string)item.Key;
-
-                    var valueProperty = item.GetType().GetProperty("Value");
-                    var valueData = valueProperty.GetValue(item);
-
-                    var dimensionsProperty = valueData.GetType().GetProperty("Dimensions");
-                    var dimensions = dimensionsProperty.GetValue(valueData);
-
-                    var dimensionsList = new List<T>();
-
-                    foreach (var dimension in (dynamic)dimensions)
-                    {
-                        var dim = (T)Convert.ChangeType(dimension, typeof(T));
-
-                        dimensionsList.Add(dim);
-                    }
-
-                    shapes.Add(tensorName, [.. dimensionsList]);
-                }
-
-                return shapes;
+                shapes.Add(kvp.Key, kvp.Value.Dimensions.Select(d => (long)d).ToArray());
             }
-            catch (YoloDotNetModelException)
-            {
-                throw;
-            }
-            catch (Exception ex)
-            {
-                throw new YoloDotNetModelException($"Failed to retrieve {propertyName} from ONNX model.", ex);
-            }
+
+            return shapes;
         }
 
         /// <summary>
-        /// Retrieves the custom metadata key-value pairs from the specified ONNX model data object.
+        /// Retrieves the output shape dimensions from an ONNX model session.
         /// </summary>
-        private static Dictionary<string, string> GetMetadata(object onnxData)
+        private static Dictionary<string, int[]> GetOutputShapes(InferenceSession session)
+        {
+            var shapes = new Dictionary<string, int[]>();
+
+            foreach (var kvp in session.OutputMetadata)
+            {
+                shapes.Add(kvp.Key, kvp.Value.Dimensions.ToArray());
+            }
+
+            return shapes;
+        }
+
+        /// <summary>
+        /// Retrieves the custom metadata key-value pairs from the ONNX model session.
+        /// </summary>
+        private static Dictionary<string, string> GetMetadata(InferenceSession session)
         {
             try
             {
-                var modelMetadataProperty = onnxData.GetType().GetProperty("ModelMetadata") ?? throw new InvalidOperationException("ModelMetadata property not found.");
-
-                var modelMetadata = modelMetadataProperty.GetValue(onnxData) ?? throw new InvalidOperationException("ModelMetadata value is null.");
-
-                var customMetadataMapProperty = modelMetadata.GetType().GetProperty("CustomMetadataMap") ?? throw new InvalidOperationException("CustomMetadataMap property not found.");
-
-                var customMetadataMap = customMetadataMapProperty.GetValue(modelMetadata) ?? throw new InvalidOperationException("CustomMetadataMap value is null.");
-
-                var metadataCollection = new Dictionary<string, string>();
-
-                foreach (var item in (dynamic)customMetadataMap)
-                {
-                    metadataCollection.Add(item.Key, item.Value);
-                }
-
-                return metadataCollection;
+                return new Dictionary<string, string>(session.ModelMetadata.CustomMetadataMap);
             }
             catch (Exception)
             {
-                // Return empty dictionary if metadata cannot be retrieved
                 return [];
             }
         }
@@ -175,34 +145,18 @@ namespace YoloDotNet.Extensions
         /// <summary>
         /// Determines the data type used by the ONNX model's input tensor.
         /// </summary>
-        private static ModelDataType GetModelDataType(object onnxData)
+        private static ModelDataType GetModelDataType(InferenceSession session)
         {
             try
             {
-                var inputMetadataProperty = onnxData.GetType().GetProperty("InputMetadata") ?? throw new YoloDotNetModelException("InputMetadata could not be retrieved from ONNX model.");
-
-                var inputMetadata = inputMetadataProperty.GetValue(onnxData) ?? throw new YoloDotNetModelException("InputMetadata value is null.");
-
-                // Get the first input's element data type
-                foreach (var item in (dynamic)inputMetadata)
+                foreach (var kvp in session.InputMetadata)
                 {
-                    var itemType = item.GetType();
-                    var valueProperty = itemType.GetProperty("Value");
-                    var valueData = valueProperty.GetValue(item);
-
-                    var elementDataTypeProperty = valueData.GetType().GetProperty("ElementDataType");
-                    var elementDataType = elementDataTypeProperty.GetValue(valueData)?.ToString();
-
-                    // Check if the element data type is Float16
-                    return string.Equals(elementDataType, "Float16", StringComparison.OrdinalIgnoreCase) ? ModelDataType.Float16 : ModelDataType.Float;
+                    return kvp.Value.ElementDataType == Microsoft.ML.OnnxRuntime.Tensors.TensorElementType.Float16
+                        ? ModelDataType.Float16
+                        : ModelDataType.Float;
                 }
 
-                // Default to Float if no inputs found
                 return ModelDataType.Float;
-            }
-            catch (YoloDotNetModelException)
-            {
-                throw;
             }
             catch (Exception ex)
             {
@@ -217,19 +171,15 @@ namespace YoloDotNet.Extensions
         {
             var labelsDict = new Dictionary<int, string>();
 
-            // 尝试 1: 使用标准 JSON 解析 (System.Text.Json)
+            // 尝试 1: 使用 JsonDocument 解析 (AOT 兼容，无需反射)
             try
             {
-                // 尝试解析 {"0": "name", "1": "name"}
-                var tmp = JsonSerializer.Deserialize<Dictionary<string, string>>(onnxLabelData);
-                if (tmp != null)
+                using var doc = JsonDocument.Parse(onnxLabelData);
+                foreach (var prop in doc.RootElement.EnumerateObject())
                 {
-                    foreach (var kvp in tmp)
+                    if (int.TryParse(prop.Name, out int id))
                     {
-                        if (int.TryParse(kvp.Key, out int id))
-                        {
-                            labelsDict[id] = kvp.Value;
-                        }
+                        labelsDict[id] = prop.Value.GetString() ?? "";
                     }
                 }
             }

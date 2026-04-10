@@ -37,4 +37,7 @@ namespace YoloDotNet.Models
 
         public long TotalFrames => ((int)Math.Floor(FPS * Duration)) - 1; // Set -1 to keep total frames zero-index.
     }
+
+    [JsonSerializable(typeof(Metadata))]
+    internal partial class VideoMetaDataContext : JsonSerializerContext;
 }

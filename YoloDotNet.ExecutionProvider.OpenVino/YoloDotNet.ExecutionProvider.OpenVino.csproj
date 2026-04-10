@@ -1,49 +1,52 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <Description>YoloDotNet OpenVINO Execution Provider enables optimized inference using Intel® OpenVINO™ on supported Intel CPUs, integrated GPUs, and accelerators.
+    <PropertyGroup>
+        <TargetFrameworks>net8.0;net10.0</TargetFrameworks>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+        <Description>YoloDotNet OpenVINO Execution Provider enables optimized inference using Intel® OpenVINO™ on supported Intel CPUs, integrated GPUs, and accelerators.
 
-This execution provider integrates ONNX Runtime with Intel OpenVINO to deliver high-performance, low-latency inference on Intel hardware across Windows and Linux. It is ideal for CPU-focused deployments, edge systems, and environments where Intel hardware acceleration is preferred over CUDA-based solutions.
+            This execution provider integrates ONNX Runtime with Intel OpenVINO to deliver high-performance, low-latency inference on Intel hardware across Windows and Linux. It is ideal for CPU-focused deployments, edge systems, and environments where Intel hardware acceleration is preferred over CUDA-based solutions.
 
-The provider is fully modular and designed to work with the execution-provider-agnostic YoloDotNet core library introduced in v4.0. Only one execution provider should be referenced per project.</Description>
-    <PackageTags>yolo;yolov5u;yolov8;yolov9;yolov10;yolov11;yolov12;yolov26;yolo8;yolo9;yolo10;yolo11;yolo26;yolo-world;yolo-e;onnx;onnx-runtime;execution-provider;modular;cross-platform;cpu;cuda;gpu;tensorrt;openvino;coreml;nvidia;intel;apple;openvino;coreml;directml;classification;object-detection;segmentation;pose-estimation;obb;oriented-bounding-box;image-processing;computer-vision;video-processing;media-processing;skiasharp;tracking;machine-learning;real-time;inference</PackageTags>
-    <PackageReleaseNotes>This release updates the internal execution provider architecture to align with YoloDotNet v4.1. Model parsing and validation are now handled exclusively by the YoloDotNet core library, simplifying execution provider implementations and ensuring consistent model handling across all backends. This execution provider requires YoloDotNet version 4.1.</PackageReleaseNotes>
-    <Version>1.1</Version>
-    <Authors>Niklas Swärd</Authors>
-    <Copyright>Copyright © 2025 Niklas Swärd</Copyright>
-    <Title>YoloDotNet OpenVINO Execution Provider</Title>
-    <PackageIcon>icon.png</PackageIcon>
-    <PackageReadmeFile>README.md</PackageReadmeFile>
-    <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <RepositoryUrl>https://github.com/NickSwardh/YoloDotNet</RepositoryUrl>
-    <PackageProjectUrl>https://github.com/NickSwardh/YoloDotNet/tree/master/YoloDotNet.ExecutionProvider.OpenVino</PackageProjectUrl>
-    <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
-  </PropertyGroup>
+            The provider is fully modular and designed to work with the execution-provider-agnostic YoloDotNet core library introduced in v4.0. Only one execution provider should be referenced per project.
+        </Description>
+        <PackageTags>yolo;yolov5u;yolov8;yolov9;yolov10;yolov11;yolov12;yolov26;yolo8;yolo9;yolo10;yolo11;yolo26;yolo-world;yolo-e;onnx;onnx-runtime;execution-provider;modular;cross-platform;cpu;cuda;gpu;tensorrt;openvino;coreml;nvidia;intel;apple;openvino;coreml;directml;classification;object-detection;segmentation;pose-estimation;obb;oriented-bounding-box;image-processing;computer-vision;video-processing;media-processing;skiasharp;tracking;machine-learning;real-time;inference</PackageTags>
+        <PackageReleaseNotes>This release updates the internal execution provider architecture to align with YoloDotNet v4.1. Model parsing and validation are now handled exclusively by the YoloDotNet core library, simplifying execution provider implementations and ensuring consistent model handling across all backends. This execution provider requires YoloDotNet version 4.1.</PackageReleaseNotes>
+        <Version>1.1</Version>
+        <Authors>Niklas Swärd</Authors>
+        <Copyright>Copyright © 2025 Niklas Swärd</Copyright>
+        <Title>YoloDotNet OpenVINO Execution Provider</Title>
+        <PackageIcon>icon.png</PackageIcon>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
+        <RepositoryUrl>https://github.com/NickSwardh/YoloDotNet</RepositoryUrl>
+        <PackageProjectUrl>https://github.com/NickSwardh/YoloDotNet/tree/master/YoloDotNet.ExecutionProvider.OpenVino</PackageProjectUrl>
+        <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
+        <!-- 仅在 .NET 10.0 下启用 AOT 兼容和剪裁兼容 -->
+        <IsAotCompatible Condition="'$(TargetFramework)' == 'net10.0'">true</IsAotCompatible>
+    </PropertyGroup>
 
-  <ItemGroup>
-    <None Include="..\icon.png">
-      <Pack>True</Pack>
-      <PackagePath>\</PackagePath>
-    </None>
-  </ItemGroup>
+    <ItemGroup>
+        <None Include="..\icon.png">
+            <Pack>True</Pack>
+            <PackagePath>\</PackagePath>
+        </None>
+    </ItemGroup>
 
-  <ItemGroup>
-    <PackageReference Include="Intel.ML.OnnxRuntime.OpenVino" Version="1.24.1" />
-  </ItemGroup>
+    <ItemGroup>
+        <PackageReference Include="Intel.ML.OnnxRuntime.OpenVino" Version="1.24.1"/>
+    </ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\YoloDotNet\YoloDotNet.csproj" />
-  </ItemGroup>
+    <ItemGroup>
+        <ProjectReference Include="..\YoloDotNet\YoloDotNet.csproj"/>
+    </ItemGroup>
 
-  <ItemGroup>
-    <None Update="README.md">
-      <Pack>True</Pack>
-      <PackagePath>\</PackagePath>
-    </None>
-  </ItemGroup>
+    <ItemGroup>
+        <None Update="README.md">
+            <Pack>True</Pack>
+            <PackagePath>\</PackagePath>
+        </None>
+    </ItemGroup>
 
 </Project>

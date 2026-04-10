@@ -158,10 +158,10 @@ namespace YoloDotNet.Video.Services
 
                 json = json.Replace("[", "").Replace("]", "");
 
-                return JsonSerializer.Deserialize<Metadata>(json) ?? new();
+                return JsonSerializer.Deserialize(json, VideoMetaDataContext.Default.Metadata) ?? new Metadata();
             }
-            else
-                throw new YoloDotNetVideoException("The specified video stream is invalid and could not be processed. ", nameof(_videoOptions.VideoInput));
+
+            throw new YoloDotNetVideoException("The specified video stream is invalid and could not be processed. ", nameof(_videoOptions.VideoInput));
         }
 
         private void InitializeFFMPEGDecode()

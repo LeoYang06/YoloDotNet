@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<TargetFramework>net8.0</TargetFramework>
+        <TargetFrameworks>net8.0;net10.0</TargetFrameworks>
 		<LangVersion>latest</LangVersion>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
@@ -41,6 +41,8 @@ Updated YOLOv26 inference execution to align with other tasks, improving consist
 
 Check out the demo projects on GitHub for hands-on examples: https://github.com/NickSwardh/YoloDotNet/tree/master/Demo</PackageReleaseNotes>
 		<Copyright>Copyright © Niklas Swärd</Copyright>
+        <!-- 仅在 .NET 10.0 下启用 AOT 兼容和剪裁兼容 -->
+        <IsAotCompatible Condition="'$(TargetFramework)' == 'net10.0'">true</IsAotCompatible>
 	</PropertyGroup>
 
 	<ItemGroup>

@@ -1,37 +1,106 @@
 // SPDX-License-Identifier: MIT
-// SPDX-FileCopyrightText: 2026 Niklas Swärd
+// SPDX-FileCopyrightText: 2026 Niklas Swï¿½rd
 // https://github.com/NickSwardh/YoloDotNet
-
-#pragma warning disable IL2026 // Reflection-based serialization
 
 namespace YoloDotNet.Extensions
 {
     public static class ResultExtensions
     {
-        private static readonly JsonSerializerOptions _jsonOptions = new()
-        {
-            WriteIndented = true,
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
-            Converters = { new SKRectIJsonConverter(), new SKPointJsonConverter(), new SegmentationJsonConverter() }
-        };
-
         private const string CLASSIFICATION_NOT_SUPPORTED =
             "Classification does not use YOLO annotation format. " +
             "YOLO classification datasets use folder-based organization (one folder per class). " +
             "Use ToJson() or SaveJson() to export classification results.";
 
-        #region JSON Export
+        #region JSON Export - AOT Compatible
+
+        /// <summary>
+        /// Serializes object detection results to a JSON string (AOT compatible).
+        /// </summary>
+        public static string ToJson(this IEnumerable<ObjectDetection> results)
+            => JsonSerializer.Serialize(results, YoloJsonContext.Default.IEnumerableObjectDetection);
+
+        /// <summary>
+        /// Serializes OBB detection results to a JSON string (AOT compatible).
+        /// </summary>
+        public static string ToJson(this IEnumerable<OBBDetection> results)
+            => JsonSerializer.Serialize(results, YoloJsonContext.Default.IEnumerableOBBDetection);
+
+        /// <summary>
+        /// Serializes segmentation results to a JSON string (AOT compatible).
+        /// </summary>
+        public static string ToJson(this IEnumerable<Segmentation> results)
+            => JsonSerializer.Serialize(results, YoloJsonContext.Default.IEnumerableSegmentation);
+
+        /// <summary>
+        /// Serializes pose estimation results to a JSON string (AOT compatible).
+        /// </summary>
+        public static string ToJson(this IEnumerable<PoseEstimation> results)
+            => JsonSerializer.Serialize(results, YoloJsonContext.Default.IEnumerablePoseEstimation);
+
+        /// <summary>
+        /// Serializes classification results to a JSON string (AOT compatible).
+        /// </summary>
+        public static string ToJson(this IEnumerable<Classification> results)
+            => JsonSerializer.Serialize(results, YoloJsonContext.Default.IEnumerableClassification);
+
+        /// <summary>
+        /// Saves object detection results to a JSON file (AOT compatible).
+        /// </summary>
+        public static void SaveJson(this IEnumerable<ObjectDetection> results, string filename)
+            => File.WriteAllText(filename, results.ToJson());
+
+        /// <summary>
+        /// Saves OBB detection results to a JSON file (AOT compatible).
+        /// </summary>
+        public static void SaveJson(this IEnumerable<OBBDetection> results, string filename)
+            => File.WriteAllText(filename, results.ToJson());
+
+        /// <summary>
+        /// Saves segmentation results to a JSON file (AOT compatible).
+        /// </summary>
+        public static void SaveJson(this IEnumerable<Segmentation> results, string filename)
+            => File.WriteAllText(filename, results.ToJson());
+
+        /// <summary>
+        /// Saves pose estimation results to a JSON file (AOT compatible).
+        /// </summary>
+        public static void SaveJson(this IEnumerable<PoseEstimation> results, string filename)
+            => File.WriteAllText(filename, results.ToJson());
+
+        /// <summary>
+        /// Saves classification results to a JSON file (AOT compatible).
+        /// </summary>
+        public static void SaveJson(this IEnumerable<Classification> results, string filename)
+            => File.WriteAllText(filename, results.ToJson());
+
+        #endregion
+
+        #region JSON Export - Generic (Reflection-based, not AOT compatible)
 
         /// <summary>
         /// Serializes detection results to a JSON string.
+        /// Note: This method is not AOT compatible. Use the type-specific ToJson() overloads for AOT compatibility.
         /// </summary>
+        [RequiresUnreferencedCode("JSON serialization may require types that cannot be statically analyzed.")]
+        [RequiresDynamicCode("JSON serialization requires runtime code generation. Use the type-specific ToJson() overloads for AOT compatibility.")]
         public static string ToJson<T>(this IEnumerable<T> results, JsonSerializerOptions? options = null)
-            => JsonSerializer.Serialize(results, options ?? _jsonOptions);
+        {
+            var opts = options ?? new JsonSerializerOptions
+            {
+                WriteIndented = true,
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+                Converters = { new SKRectIJsonConverter(), new SKPointJsonConverter(), new SegmentationJsonConverter() }
+            };
+            return JsonSerializer.Serialize(results, opts);
+        }
 
         /// <summary>
         /// Saves detection results to a JSON file.
+        /// Note: This method is not AOT compatible. Use the type-specific SaveJson() overloads for AOT compatibility.
         /// </summary>
+        [RequiresUnreferencedCode("JSON serialization may require types that cannot be statically analyzed.")]
+        [RequiresDynamicCode("JSON serialization requires runtime code generation. Use the type-specific SaveJson() overloads for AOT compatibility.")]
         public static void SaveJson<T>(this IEnumerable<T> results, string filename, JsonSerializerOptions? options = null)
             => File.WriteAllText(filename, results.ToJson(options));
 
@@ -428,6 +497,38 @@ namespace YoloDotNet.Extensions
             }
 
             writer.WriteEndObject();
+        }
+    }
+
+    /// <summary>
+    /// Source Generator context for AOT-compatible JSON serialization of YoloDotNet result types.
+    /// </summary>
+    [JsonSerializable(typeof(IEnumerable<ObjectDetection>))]
+    [JsonSerializable(typeof(IEnumerable<OBBDetection>))]
+    [JsonSerializable(typeof(IEnumerable<Segmentation>))]
+    [JsonSerializable(typeof(IEnumerable<PoseEstimation>))]
+    [JsonSerializable(typeof(IEnumerable<Classification>))]
+    [JsonSerializable(typeof(ObjectDetection))]
+    [JsonSerializable(typeof(OBBDetection))]
+    [JsonSerializable(typeof(Segmentation))]
+    [JsonSerializable(typeof(PoseEstimation))]
+    [JsonSerializable(typeof(Classification))]
+    [JsonSerializable(typeof(LabelModel))]
+    [JsonSerializable(typeof(KeyPoint))]
+    [JsonSerializable(typeof(SKRectI))]
+    [JsonSerializable(typeof(SKPoint))]
+    [JsonSerializable(typeof(TrackingInfo))]
+    internal partial class YoloJsonContext : JsonSerializerContext
+    {
+        static YoloJsonContext()
+        {
+            Default = new YoloJsonContext(new JsonSerializerOptions
+            {
+                WriteIndented = true,
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+                Converters = { new SKRectIJsonConverter(), new SKPointJsonConverter(), new SegmentationJsonConverter() }
+            });
         }
     }
 }

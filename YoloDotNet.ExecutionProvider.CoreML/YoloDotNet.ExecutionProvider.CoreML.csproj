@@ -1,49 +1,52 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <Authors>Niklas Swärd</Authors>
-    <Copyright>Copyright © Niklas Swärd</Copyright>
-    <PackageIcon>icon.png</PackageIcon>
-    <Version>1.1</Version>
-    <PackageReadmeFile>README.md</PackageReadmeFile>
-    <Description>YoloDotNet.ExecutionProvider.CoreML enables hardware-accelerated inference on macOS using Apple’s native Core ML framework.
+    <PropertyGroup>
+        <TargetFrameworks>net8.0;net10.0</TargetFrameworks>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+        <Authors>Niklas Swärd</Authors>
+        <Copyright>Copyright © Niklas Swärd</Copyright>
+        <PackageIcon>icon.png</PackageIcon>
+        <Version>1.1</Version>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
+        <Description>YoloDotNet.ExecutionProvider.CoreML enables hardware-accelerated inference on macOS using Apple’s native Core ML framework.
 
-This provider integrates ONNX Runtime’s CoreML execution backend, allowing models to run efficiently on Apple Silicon by leveraging system-level ML acceleration. No external runtimes, drivers, or SDKs are required beyond a supported version of macOS.
+            This provider integrates ONNX Runtime’s CoreML execution backend, allowing models to run efficiently on Apple Silicon by leveraging system-level ML acceleration. No external runtimes, drivers, or SDKs are required beyond a supported version of macOS.
 
-Designed for YoloDotNet’s modular, execution-provider-agnostic architecture, the CoreML provider integrates cleanly with the core library and exposes predictable, explicit inference behavior. It is well-suited for macOS applications that require fast, low-power, native inference using Apple’s ML stack without additional dependencies.</Description>
-    <PackageTags>yolo;yolodotnet;coreml;apple;macos;onnx;onnxruntime;machine-learning;computer-vision;object-detection;segmentation;pose-estimation;classification;obb;real-time;inference;hardware-acceleration;apple-silicon;intel-mac</PackageTags>
-    <PackageReleaseNotes>This release updates the internal execution provider architecture to align with YoloDotNet v4.1. Model parsing and validation are now handled exclusively by the YoloDotNet core library, simplifying execution provider implementations and ensuring consistent model handling across all backends. This execution provider requires YoloDotNet version 4.1.</PackageReleaseNotes>
-    <Title>YoloDotNet CoreML Execution Provider</Title>
-    <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <PackageProjectUrl>https://github.com/NickSwardh/YoloDotNet/tree/master/YoloDotNet.ExecutionProvider.CoreML</PackageProjectUrl>
-    <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
-    <RepositoryUrl>https://github.com/NickSwardh/YoloDotNet</RepositoryUrl>
-  </PropertyGroup>
+            Designed for YoloDotNet’s modular, execution-provider-agnostic architecture, the CoreML provider integrates cleanly with the core library and exposes predictable, explicit inference behavior. It is well-suited for macOS applications that require fast, low-power, native inference using Apple’s ML stack without additional dependencies.
+        </Description>
+        <PackageTags>yolo;yolodotnet;coreml;apple;macos;onnx;onnxruntime;machine-learning;computer-vision;object-detection;segmentation;pose-estimation;classification;obb;real-time;inference;hardware-acceleration;apple-silicon;intel-mac</PackageTags>
+        <PackageReleaseNotes>This release updates the internal execution provider architecture to align with YoloDotNet v4.1. Model parsing and validation are now handled exclusively by the YoloDotNet core library, simplifying execution provider implementations and ensuring consistent model handling across all backends. This execution provider requires YoloDotNet version 4.1.</PackageReleaseNotes>
+        <Title>YoloDotNet CoreML Execution Provider</Title>
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
+        <PackageProjectUrl>https://github.com/NickSwardh/YoloDotNet/tree/master/YoloDotNet.ExecutionProvider.CoreML</PackageProjectUrl>
+        <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
+        <RepositoryUrl>https://github.com/NickSwardh/YoloDotNet</RepositoryUrl>
+        <!-- 仅在 .NET 10.0 下启用 AOT 兼容和剪裁兼容 -->
+        <IsAotCompatible Condition="'$(TargetFramework)' == 'net10.0'">true</IsAotCompatible>
+    </PropertyGroup>
 
-  <ItemGroup>
-    <None Include="..\icon.png">
-      <Pack>True</Pack>
-      <PackagePath>\</PackagePath>
-    </None>
-  </ItemGroup>
+    <ItemGroup>
+        <None Include="..\icon.png">
+            <Pack>True</Pack>
+            <PackagePath>\</PackagePath>
+        </None>
+    </ItemGroup>
 
-  <ItemGroup>
-    <PackageReference Include="Microsoft.ML.OnnxRuntime" Version="1.24.3" />
-  </ItemGroup>
+    <ItemGroup>
+        <PackageReference Include="Microsoft.ML.OnnxRuntime" Version="1.24.3"/>
+    </ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\YoloDotNet\YoloDotNet.csproj" />
-  </ItemGroup>
+    <ItemGroup>
+        <ProjectReference Include="..\YoloDotNet\YoloDotNet.csproj"/>
+    </ItemGroup>
 
-  <ItemGroup>
-    <None Update="README.md">
-      <Pack>True</Pack>
-      <PackagePath>\</PackagePath>
-    </None>
-  </ItemGroup>
+    <ItemGroup>
+        <None Update="README.md">
+            <Pack>True</Pack>
+            <PackagePath>\</PackagePath>
+        </None>
+    </ItemGroup>
 
 </Project>
